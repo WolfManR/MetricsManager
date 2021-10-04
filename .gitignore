@@ -1,0 +1,12 @@
+# CompileTime Directories & Files
+[Oo]bj
+[Bb]in
+
+# IDE Cache & Settings
+.vs
+.vscode
+*.user
+
+# DataBase files
+*.mdf
+*.ldf
