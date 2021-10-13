@@ -1,7 +1,7 @@
-﻿using Quartz.Spi;
-using Quartz;
+﻿using Quartz;
+using Quartz.Spi;
 
-namespace MetricsAgent.Jobs;
+namespace MetricsAgent.QuartzServices;
 
 public class JobFactory : IJobFactory
 {

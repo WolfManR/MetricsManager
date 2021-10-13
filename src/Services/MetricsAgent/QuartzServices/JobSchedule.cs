@@ -1,4 +1,4 @@
-﻿namespace MetricsAgent.Jobs;
+﻿namespace MetricsAgent.QuartzServices;
 
 public class JobSchedule
 {

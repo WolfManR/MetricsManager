@@ -1,6 +1,6 @@
 ﻿using Quartz;
 
-namespace MetricsAgent.Jobs;
+namespace MetricsAgent.QuartzServices;
 
 public static class JobRegistrationExtensions
 {
