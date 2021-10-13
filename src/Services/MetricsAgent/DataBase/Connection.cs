@@ -2,7 +2,7 @@
 
 namespace MetricsAgent.DataBase;
 
-public class Connection : ICreateConnectionStage, IConnectionConfigurationStage
+public class Connection : IConnectionBuilder, IConnectionConfigurationStage
 {
     private string _connectionString;
 
@@ -17,7 +17,7 @@ public class Connection : ICreateConnectionStage, IConnectionConfigurationStage
     }
 
     public SQLiteConnection CreateSQLiteConnection() => new SQLiteConnection(_connectionString);
-    public ICreateConnectionStage WithConnectionString(string connectionString)
+    public IConnectionBuilder WithConnectionString(string connectionString)
     {
         _connectionString = connectionString;
         return this;
@@ -26,10 +26,10 @@ public class Connection : ICreateConnectionStage, IConnectionConfigurationStage
 
 public interface IConnectionConfigurationStage
 {
-    public ICreateConnectionStage WithConnectionString(string connectionString);
+    public IConnectionBuilder WithConnectionString(string connectionString);
 }
 
-public interface ICreateConnectionStage
+public interface IConnectionBuilder
 {
     public SQLiteConnection CreateSQLiteConnection();
 }
