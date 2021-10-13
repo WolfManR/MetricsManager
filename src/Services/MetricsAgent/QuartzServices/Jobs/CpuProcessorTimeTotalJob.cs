@@ -1,11 +1,10 @@
 ﻿using MetricsAgent.DataBase.Repositories;
 using Quartz;
-using System.Data.SQLite;
 using System.Diagnostics;
 
 namespace MetricsAgent.QuartzServices.Jobs;
 
-public class CpuProcessorTimeTotalJob
+public class CpuProcessorTimeTotalJob : IJob
 {
     private readonly ICpuMetricsRepository _repository;
     private readonly ILogger<CpuProcessorTimeTotalJob> _logger;
@@ -24,15 +23,11 @@ public class CpuProcessorTimeTotalJob
         {
             var cpuMetric = Convert.ToInt32(_counter.NextValue());
             var time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            _repository.Create(new(time, cpuMetric));
+            _repository.CreateAsync(new(time, cpuMetric));
         }
         catch (OverflowException e)
         {
             _logger.LogError("Cant create cpu metric, metric value overflow limit of integer", e);
-        }
-        catch (SQLiteException e) when (e.Message.Contains("no such table"))
-        {
-            _logger.LogDebug("Table for cpu metrics still not exist");
         }
         catch (Exception e)
         {

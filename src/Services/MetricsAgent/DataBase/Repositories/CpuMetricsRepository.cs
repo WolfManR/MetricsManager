@@ -1,41 +1,22 @@
 ﻿using MetricsAgent.Models;
-
-using static Dapper.SqlMapper;
+using Microsoft.EntityFrameworkCore;
 
 namespace MetricsAgent.DataBase.Repositories;
 public class CpuMetricsRepository : ICpuMetricsRepository
 {
-    private readonly IConnectionBuilder _connectionBuilder;
-    private string TableName { get; } = SD.CpuProcessorTimeTotalTableName;
+    private readonly AgentDbContext _context;
 
-    protected CpuMetricsRepository(IConnectionBuilder connectionBuilder)
+    protected CpuMetricsRepository(AgentDbContext context)
     {
-        _connectionBuilder = connectionBuilder;
+        _context = context;
     }
 
-    public void Create(CreateCpuProcessorTimeTotalMetric entity)
+    public async Task<OperationResult<Guid>> CreateAsync(CreateCpuProcessorTimeTotalMetric metricDto)
     {
-        using var connection = _connectionBuilder.CreateSQLiteConnection();
-        var result = connection.Execute(
-            $"INSERT INTO {TableName}(Value,RetrieveTime) VALUES (@value,@time);",
-            new
-            {
-                value = entity.Value,
-                time = entity.RetrieveTime
-            }
-        );
-
-        if (result <= 0)
-        {
-            throw new InvalidOperationException("Failure to add entity to database")
-            {
-                Data =
-                {
-                    ["value"] = entity.Value,
-                    ["time"] = entity.RetrieveTime
-                }
-            };
-        }
+        CpuProcessorTimeTotalMetric entity = new(Guid.Empty, metricDto.RetrieveTime, metricDto.Value);
+        await _context.CpuProcessorTimeTotalMetrics.AddAsync(entity);
+        await _context.SaveChangesAsync();
+        return new OperationResult<Guid>( Result: entity.Id );
     }
 
     public IList<CpuProcessorTimeTotalMetric> GetByTimePeriod(DateTimeOffset from, DateTimeOffset to)
@@ -43,22 +24,18 @@ public class CpuMetricsRepository : ICpuMetricsRepository
         var fromSeconds = from.ToUnixTimeSeconds();
         var toSeconds = to.ToUnixTimeSeconds();
 
-        using var connection = _connectionBuilder.CreateSQLiteConnection();
-        string command;
-        object commandParameters;
+        
         if (fromSeconds == toSeconds)
         {
-            command = $"SELECT * FROM {TableName} WHERE (RetrieveTime = @from);";
-            commandParameters = new { from = fromSeconds };
-        }
-        else
-        {
-            command = $"SELECT * FROM {TableName} WHERE (RetrieveTime > @from) and (RetrieveTime < @to);";
-            commandParameters = fromSeconds > toSeconds
-                ? new { from = toSeconds, to = fromSeconds }
-                : new { from = fromSeconds, to = toSeconds };
+            return _context.CpuProcessorTimeTotalMetrics
+                .AsNoTracking()
+                .Where(m => m.RetrieveTime == fromSeconds)
+                .ToList();
         }
 
-        return connection.Query<CpuProcessorTimeTotalMetric>(command, commandParameters).ToList();
+        return _context.CpuProcessorTimeTotalMetrics
+            .AsNoTracking()
+            .Where(m => m.RetrieveTime > fromSeconds && m.RetrieveTime < toSeconds)
+            .ToList();
     }
 }

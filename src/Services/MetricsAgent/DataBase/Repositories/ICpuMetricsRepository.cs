@@ -4,6 +4,6 @@ namespace MetricsAgent.DataBase.Repositories;
 
 public interface ICpuMetricsRepository
 {
-    void Create(CreateCpuProcessorTimeTotalMetric entity);
+    Task<OperationResult<Guid>> CreateAsync(CreateCpuProcessorTimeTotalMetric entity);
     IList<CpuProcessorTimeTotalMetric> GetByTimePeriod(DateTimeOffset from, DateTimeOffset to);
 }
