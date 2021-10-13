@@ -3,7 +3,7 @@
 using static Dapper.SqlMapper;
 
 namespace MetricsAgent.DataBase.Repositories;
-public class CpuMetricsRepository
+public class CpuMetricsRepository : ICpuMetricsRepository
 {
     private readonly IConnectionBuilder _connectionBuilder;
     private string TableName { get; } = SD.CpuProcessorTimeTotalTableName;
