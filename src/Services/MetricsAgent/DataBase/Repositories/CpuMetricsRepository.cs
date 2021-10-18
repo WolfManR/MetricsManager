@@ -6,7 +6,7 @@ public class CpuMetricsRepository : ICpuMetricsRepository
 {
     private readonly AgentDbContext _context;
 
-    protected CpuMetricsRepository(AgentDbContext context)
+    public CpuMetricsRepository(AgentDbContext context)
     {
         _context = context;
     }
