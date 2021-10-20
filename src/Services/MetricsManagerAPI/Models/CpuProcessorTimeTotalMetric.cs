@@ -1,9 +1,9 @@
 ﻿namespace MetricsManagerAPI.Models;
 
-public record CpuProcessorTimeTotalMetric(Guid Id, long RetrieveTime, int Value)
+public record CpuProcessorTimeTotalMetric(long RetrieveTime, int Value, Guid AgentId)
 {
-    public AgentInfo Agent { get; init; }
+    public Guid Id { get; set; }
 }
 
 public record GetCpuProcessorTimeTotalMetric(Guid Id, long RetrieveTime, int Value);
-public record CreateCpuProcessorTimeTotalMetric(AgentInfo Agent, long RetrieveTime, int Value);
+public record CreateCpuProcessorTimeTotalMetric(Guid AgentId, long RetrieveTime, int Value);
