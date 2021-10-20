@@ -1,4 +1,5 @@
 ﻿using MetricsManagerAPI.Models;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace MetricsManagerAPI.DataBase;
@@ -14,7 +15,7 @@ public class CpuMetricsRepository : ICpuMetricsRepository
 
     public async Task<OperationResult<Guid>> CreateAsync(CreateCpuProcessorTimeTotalMetric metricDto)
     {
-        CpuProcessorTimeTotalMetric entity = new(Guid.Empty, metricDto.RetrieveTime, metricDto.Value);
+        CpuProcessorTimeTotalMetric entity = new(metricDto.RetrieveTime, metricDto.Value, metricDto.AgentId);
         await _context.CpuProcessorTimeTotalMetrics.AddAsync(entity);
         await _context.SaveChangesAsync();
         return new OperationResult<Guid>(Result: entity.Id);
@@ -40,9 +41,31 @@ public class CpuMetricsRepository : ICpuMetricsRepository
             .ToList();
     }
 
+    public async Task AddMetricsChunK(IEnumerable<CreateCpuProcessorTimeTotalMetric> chunk)
+    {
+        var entries = chunk.Select(metric => new CpuProcessorTimeTotalMetric(metric.RetrieveTime, metric.Value, metric.AgentId));
+        await _context.CpuProcessorTimeTotalMetrics.AddRangeAsync(entries);
+        await _context.SaveChangesAsync();
+    }
+
     private static (long, long) GetCorrectTimeValuesRange(DateTimeOffset @from, DateTimeOffset to)
     {
         if (@from > to) return (to.ToUnixTimeSeconds(), @from.ToUnixTimeSeconds());
         return (@from.ToUnixTimeSeconds(), to.ToUnixTimeSeconds());
+    }
+
+    public async Task<OperationResult<DateTimeOffset>> GetAgentLastMetricDate(Guid agentId)
+    {
+        var maxTime = await _context.CpuProcessorTimeTotalMetrics
+            .AsNoTracking()
+            .Where(m => m.AgentId == agentId)
+            .MaxAsync(m => m.RetrieveTime);
+
+        if (maxTime >= 0)
+        {
+            return new OperationResult<DateTimeOffset>(Result: DateTimeOffset.FromUnixTimeSeconds(maxTime));
+        }
+
+        return new OperationResult<DateTimeOffset>(DateTimeOffset.UtcNow, false);
     }
 }

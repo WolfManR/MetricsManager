@@ -7,6 +7,7 @@ namespace MetricsManagerAPI.DataBase
         Task<OperationResult<Guid>> CreateAsync(CreateAgent agent);
         Task<OperationResult> DisableAgentAsync(Guid id);
         Task<OperationResult> EnableAgentAsync(Guid id);
-        Task<OperationResult<IEnumerable<GetAgent>>> GetAgentsAsync();
+        Task<OperationResult<IEnumerable<GetAgentEnableInfo>>> GetAgentsAsync();
+        Task<OperationResult<IEnumerable<GetAgent>>> GetEnabledAgentsAsync();
     }
 }

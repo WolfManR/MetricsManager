@@ -19,7 +19,7 @@ public class AgentsRepository : IAgentsRepository
         await _context.Agents.AddAsync(entity);
         await _context.SaveChangesAsync();
 
-        return new OperationResult<Guid>(true, entity.Id);
+        return new OperationResult<Guid>(entity.Id);
     }
 
     public async Task<OperationResult> EnableAgentAsync(Guid id)
@@ -31,7 +31,7 @@ public class AgentsRepository : IAgentsRepository
         agent.IsEnabled = true;
         await _context.SaveChangesAsync();
 
-        return new OperationResult(true);
+        return new OperationResult();
     }
 
     public async Task<OperationResult> DisableAgentAsync(Guid id)
@@ -43,13 +43,20 @@ public class AgentsRepository : IAgentsRepository
         agent.IsEnabled = false;
         await _context.SaveChangesAsync();
 
-        return new OperationResult(true);
+        return new OperationResult();
     }
 
-    public async Task<OperationResult<IEnumerable<GetAgent>>> GetAgentsAsync()
+    public async Task<OperationResult<IEnumerable<GetAgentEnableInfo>>> GetAgentsAsync()
     {
-        var data = await _context.Agents.ToListAsync();
-        if(!data.Any()) return new OperationResult<IEnumerable<GetAgent>>(true, Array.Empty<GetAgent>());
-        return new OperationResult<IEnumerable<GetAgent>>(true, data.Select(x => new GetAgent(x.Id, x.IsEnabled)));
+        var data = await _context.Agents.AsNoTracking().ToListAsync();
+        if(!data.Any()) return new OperationResult<IEnumerable<GetAgentEnableInfo>>(Array.Empty<GetAgentEnableInfo>());
+        return new OperationResult<IEnumerable<GetAgentEnableInfo>>(data.Select(x => new GetAgentEnableInfo(x.Uri, x.IsEnabled)));
+    }
+
+    public async Task<OperationResult<IEnumerable<GetAgent>>> GetEnabledAgentsAsync()
+    {
+        var data = await _context.Agents.AsNoTracking().Where(a => a.IsEnabled).ToListAsync();
+        if (!data.Any()) return new OperationResult<IEnumerable<GetAgent>>(Array.Empty<GetAgent>());
+        return new OperationResult<IEnumerable<GetAgent>>(data.Select(x => new GetAgent(x.Id, x.Uri)));
     }
 }
