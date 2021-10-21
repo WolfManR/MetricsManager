@@ -1,7 +1,9 @@
 using MetricsManagerAPI.Clients;
 using MetricsManagerAPI.DataBase;
+using MetricsManagerAPI.Models;
 using MetricsManagerAPI.QuartzService;
 using MetricsManagerAPI.QuartzService.MetricJobs;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Quartz.Impl;
 
@@ -43,8 +45,42 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapPost("/api/agents/register",
+    async ([FromBody] string uri, [FromBody] bool isEnabled, IAgentsRepository agentsRepository, ILogger<WebApplication> logger) =>
+    {
+        var result = await agentsRepository.CreateAsync(new CreateAgent(uri, isEnabled));
+        if (!result.IsSuccess)
+        {
+            return Results.BadRequest("Agent may be registered");
+        }
+        return Results.Ok(result.Result);
+    });
 
-app.MapGet("/", () => "Hello Metrics!")
-.WithName("Hello Metrics");
+app.MapPut("/api/agents/enable/{agentId:Guid}",
+    async ([FromRoute] Guid agentId, IAgentsRepository agentsRepository, ILogger<WebApplication> logger) =>
+    {
+        if (agentId == Guid.Empty) return Results.BadRequest("Wrong Id");
+        var result = await agentsRepository.EnableAgentAsync(agentId);
+        if (!result.IsSuccess) return Results.BadRequest("Fail to enable agent");
+        return Results.Ok();
+    });
+
+app.MapPut("/api/agents/disable/{agentId:Guid}",
+    async ([FromRoute] Guid agentId, IAgentsRepository agentsRepository, ILogger<WebApplication> logger) =>
+    {
+        if (agentId == Guid.Empty) return Results.BadRequest("Wrong Id");
+        var result = await agentsRepository.DisableAgentAsync(agentId);
+        if (!result.IsSuccess) return Results.BadRequest("Fail to disable agent");
+        return Results.Ok();
+    });
+
+app.MapGet("/api/agents",
+    async (IAgentsRepository agentsRepository, ILogger<WebApplication> logger) =>
+    {
+        var result = await agentsRepository.GetAgentsAsync();
+        if (!result.IsSuccess) return Results.BadRequest("Fail to get agents");
+        return Results.Ok(result.Result);
+    });
+
 
 app.Run();
