@@ -14,6 +14,11 @@ public class AgentsRepository : IAgentsRepository
 
     public async Task<OperationResult<Guid>> CreateAsync(CreateAgent agent)
     {
+        if (_context.Agents.Any(a => a.Uri == agent.Uri))
+        {
+            return new OperationResult<Guid>(Guid.Empty, true);
+        }
+
         var entity = new AgentInfo(Guid.Empty, agent.Uri) { IsEnabled = agent.IsEnabled };
 
         await _context.Agents.AddAsync(entity);
