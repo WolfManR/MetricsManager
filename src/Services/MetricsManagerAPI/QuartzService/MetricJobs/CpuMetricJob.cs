@@ -1,13 +1,13 @@
-﻿using MetricsManagerAPI.DataBase;
+﻿using MetricsManagerAPI.Clients;
+using MetricsManagerAPI.DataBase;
 using MetricsManagerAPI.Models;
+
 using Quartz;
-using System.Collections.Immutable;
-using MetricsManagerAPI.Clients;
 
 namespace MetricsManagerAPI.QuartzService.MetricJobs;
 
 [DisallowConcurrentExecution]
-public class CpuMetricJob
+public class CpuMetricJob : IJob
 {
     private readonly ICpuMetricsRepository _metricsRepository;
     private readonly ICpuMetricsClient _client;
@@ -23,12 +23,12 @@ public class CpuMetricJob
     public async Task Execute(IJobExecutionContext context)
     {
         var result = await _agentsRepository.GetEnabledAgentsAsync();
-        if(!result.IsSuccess) return;
+        if (!result.IsSuccess) return;
         var metrics = await Task.WhenAll(result.Result.Select(a => GetAgentMetrics(a.Id, a.Uri)));
         // Add metrics
         foreach (var chunk in metrics.SelectMany(enumerable => enumerable).Chunk(8))
         {
-            _metricsRepository.AddMetricsChunK(chunk);
+           await _metricsRepository.AddMetricsChunK(chunk);
         }
     }
 
