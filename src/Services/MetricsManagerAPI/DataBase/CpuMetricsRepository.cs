@@ -41,6 +41,26 @@ public class CpuMetricsRepository : ICpuMetricsRepository
             .ToList();
     }
 
+    public IList<GetCpuProcessorTimeTotalMetric> GetByTimePeriod(Guid agentId, DateTimeOffset from, DateTimeOffset to)
+    {
+        var (fromSeconds, toSeconds) = GetCorrectTimeValuesRange(from, to);
+
+        if (fromSeconds == toSeconds)
+        {
+            return _context.CpuProcessorTimeTotalMetrics
+                .AsNoTracking()
+                .Where(m => m.RetrieveTime == fromSeconds && m.AgentId == agentId)
+                .Select(m => new GetCpuProcessorTimeTotalMetric(m.Id, m.RetrieveTime, m.Value))
+                .ToList();
+        }
+
+        return _context.CpuProcessorTimeTotalMetrics
+            .AsNoTracking()
+            .Where(m => m.RetrieveTime > fromSeconds && m.RetrieveTime < toSeconds && m.AgentId == agentId)
+            .Select(m => new GetCpuProcessorTimeTotalMetric(m.Id, m.RetrieveTime, m.Value))
+            .ToList();
+    }
+
     public async Task AddMetricsChunK(IEnumerable<CreateCpuProcessorTimeTotalMetric> chunk)
     {
         var entries = chunk.Select(metric => new CpuProcessorTimeTotalMetric(metric.RetrieveTime, metric.Value, metric.AgentId));
